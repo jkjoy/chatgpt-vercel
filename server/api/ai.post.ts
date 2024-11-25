@@ -1,9 +1,8 @@
 import type { ParsedEvent, ReconnectInterval } from "eventsource-parser"
 import { createParser } from "eventsource-parser"
-import type { ChatMessage, Model } from "~/types"
-import { splitKeys, randomKey, fetchWithTimeout } from "~/utils"
-import { defaultEnv } from "~/env"
-import type { APIEvent } from "solid-start/api"
+import type { ChatMessage, Model } from "../../shared/types"
+import { defaultEnv } from "../../shared/env"
+import { randomKey, splitKeys, fetchWithTimeout } from "../utils"
 
 export const config = {
   runtime: "edge",
@@ -50,7 +49,8 @@ const timeout = isNaN(+process.env.TIMEOUT!)
 
 const passwordSet = process.env.PASSWORD || defaultEnv.PASSWORD
 
-export async function POST({ request }: APIEvent) {
+
+export default defineEventHandler(async event => {
   try {
     const body: {
       messages?: ChatMessage[]
@@ -58,7 +58,7 @@ export async function POST({ request }: APIEvent) {
       temperature: number
       password?: string
       model: Model
-    } = await request.json()
+    } = await readBody(event).then(JSON.parse)
     const { messages, key = localKey, temperature, password, model } = body
 
     if (passwordSet && password !== passwordSet) {
@@ -147,4 +147,4 @@ export async function POST({ request }: APIEvent) {
       { status: 400 }
     )
   }
-}
+})
